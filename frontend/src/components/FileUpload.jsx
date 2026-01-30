@@ -83,6 +83,7 @@ export default function FileUpload({ onDataLoaded, onError, isLoading, setIsLoad
         setIsLoading(true)
 
         try {
+            // Try backend API first (for local development)
             const response = await axios.get('/api/demo')
 
             if (response.data.success) {
@@ -91,10 +92,13 @@ export default function FileUpload({ onDataLoaded, onError, isLoading, setIsLoad
                 onError(response.data.message || 'Failed to load demo data')
             }
         } catch (err) {
-            console.error('Demo load error:', err)
-            if (err.code === 'ERR_NETWORK') {
-                onError('Cannot connect to server. Please ensure the backend is running on port 8000.')
-            } else {
+            console.log('Backend not available, using embedded demo data')
+            // Fallback to embedded demo data (for Vercel/static deployment)
+            try {
+                const { demoData } = await import('../data/demoData.js')
+                onDataLoaded(demoData)
+            } catch (importErr) {
+                console.error('Failed to load embedded demo data:', importErr)
                 onError('Failed to load demo data. Please try again.')
             }
         } finally {
